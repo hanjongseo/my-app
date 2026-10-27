@@ -39,6 +39,7 @@ export async function SiteHeader() {
               <span className="text-zinc-500 dark:text-zinc-400">
                 {session.user.name}님
               </span>
+              <span>{session.user.email}</span>
               <form action={logoutAction}>
                 <button
                   type="submit"

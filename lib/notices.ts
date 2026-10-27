@@ -4,7 +4,8 @@ import { connectDB } from "./mongodb"
 export type Notice = {
   id: string
   title: string
-  author: string
+  authorId: string
+  authorName: string
   content: string
   createdAt: string
 }
@@ -12,7 +13,8 @@ export type Notice = {
 type NoticeDocLike = {
   _id: unknown
   title: string
-  author: string
+  authorId: unknown
+  authorName: string
   content: string
   createdAt?: Date
 }
@@ -21,33 +23,34 @@ function toNotice(doc: NoticeDocLike): Notice {
   return {
     id: String(doc._id),
     title: doc.title,
-    author: doc.author,
+    authorId: String(doc.authorId),
+    authorName: doc.authorName,
     content: doc.content,
     createdAt: (doc.createdAt ?? new Date()).toISOString().slice(0, 10),
   }
 }
 
-async function seedIfEmpty() {
-  const count = await NoticeModel.countDocuments()
-  if (count > 0) return
-  await NoticeModel.insertMany([
-    {
-      title: "추석 일정 안내",
-      author: "한종서",
-      content: "목요일부터 일요일",
-    },
-    {
-      title: "음식 할인 품목 안내",
-      author: "한종서",
-      content: "이메일을 확인해주세요",
-    },
-    {
-      title: "교통체증 안내",
-      author: "한종서",
-      content: "9시부터 11시",
-    },
-  ])
-}
+//async function seedIfEmpty() {
+// const count = await NoticeModel.countDocuments()
+// if (count > 0) return
+// await NoticeModel.insertMany([
+//  {
+//    title: "추석 일정 안내",
+//   author: "한종서",
+//   content: "목요일부터 일요일",
+// },
+// {
+// title: "음식 할인 품목 안내",
+//  author: "한종서",
+//  content: "이메일을 확인해주세요",
+//},
+//{
+// title: "교통체증 안내",
+//  author: "한종서",
+// content: "9시부터 11시",
+// },
+// ])
+//}
 
 //const notices: Notice[] = [
 //{
@@ -79,7 +82,7 @@ async function seedIfEmpty() {
 
 export async function getNotices(): Promise<Notice[]> {
   await connectDB()
-  await seedIfEmpty()
+  //await seedIfEmpty()
 
   const docs = await NoticeModel.find().sort({ createdAt: -1 }).lean()
   return docs.map((doc) => toNotice(doc as NoticeDocLike))
@@ -102,8 +105,10 @@ export async function getNotice(id: string): Promise<Notice | undefined> {
 
 export async function createNotice(input: {
   title: string
-  author: string
+  //author: string
   content: string
+  authorId: string
+  authorName: string
 }): Promise<Notice> {
   //
   await connectDB()
@@ -120,3 +125,7 @@ export async function createNotice(input: {
 // notices.push(notice)
 // return notice
 //}
+export async function deleteNotice(id: string): Promise<void> {
+  await connectDB()
+  await NoticeModel.findByIdAndDelete(id)
+}
