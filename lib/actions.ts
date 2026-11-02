@@ -1,19 +1,60 @@
 "use server"
 
-import { likeProduct as likeProductInDb } from "@/lib/products"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { createNotice, deleteNotice, getNotice } from "@/lib/notices"
 import { createUser } from "@/lib/users"
 import { auth, signIn, signOut } from "@/auth"
 import { AuthError } from "next-auth"
+import { getProduct } from "./products"
+import { addToCart, removeFromCart, updateCartQty } from "./cart"
 
-export async function likeProductAction(id: string) {
-  const newLikes = await likeProductInDb(id)
-  revalidatePath("/products${id}")
-  return newLikes
+export async function addToCartAction(formData: FormData) {
+  const productId = String(formData.get("productId") ?? "")
+  const requestedQty = Math.max(1, Number(formData.get("qty") ?? 1) || 1)
+  if (!productId) {
+    throw new Error("잘못된 상품입니다.")
+  }
+
+  const product = await getProduct(productId)
+  if (!product || product.stock === 0) {
+    throw new Error("담을 수 없는 상품입니다.")
+  }
+
+  const qty = Math.min(requestedQty, product.stock)
+  await addToCart(productId, qty)
+
+  // 장바구니 개수 배지는 모든 페이지의 SiteHeader(루트 레이아웃)에 있으므로,
+  // 특정 경로가 아니라 레이아웃 자체를 다시 그리도록 알려줘야 합니다.
+  revalidatePath("/", "layout")
 }
 
+export async function updateCartQtyAction(formData: FormData) {
+  const productId = String(formData.get("productId") ?? "")
+  const requestedQty = Number(formData.get("qty") ?? 0)
+  if (!productId) {
+    throw new Error("잘못된 상품입니다.")
+  }
+
+  if (requestedQty <= 0) {
+    await removeFromCart(productId)
+  } else {
+    const product = await getProduct(productId)
+    const qty = product ? Math.min(requestedQty, product.stock) : requestedQty
+    await updateCartQty(productId, qty)
+  }
+
+  revalidatePath("/", "layout")
+}
+
+export async function removeFromCartAction(formData: FormData) {
+  const productId = String(formData.get("productId") ?? "")
+  if (!productId) {
+    throw new Error("잘못된 상품입니다.")
+  }
+  await removeFromCart(productId)
+  revalidatePath("/", "layout")
+}
 export async function createNoticeAction(formData: FormData) {
   const session = await auth()
   console.log(session)

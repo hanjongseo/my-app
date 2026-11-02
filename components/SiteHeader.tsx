@@ -1,10 +1,12 @@
 import Link from "next/link"
 import { auth } from "@/auth"
 import { logoutAction } from "@/lib/actions"
+import { getCartCount } from "@/lib/cart"
 
 export async function SiteHeader() {
   const session = await auth()
-  console.log(session)
+  const cartCount = await getCartCount()
+
   return (
     <header className="border-b border-black/[.08] dark:border-white/[.145]">
       <div className="mx-auto flex max-w-2xl items-center justify-between px-8 py-4">
@@ -22,6 +24,17 @@ export async function SiteHeader() {
             상품
           </Link>
           <Link
+            href="/cart"
+            className="hover:text-black dark:hover:text-zinc-50"
+          >
+            장바구니
+            {cartCount > 0 && (
+              <span className="ml-1.5 rounded-full bg-black px-1.5 py-0.5 text-[10px] font-semibold text-white dark:bg-white dark:text-black">
+                {cartCount}
+              </span>
+            )}
+          </Link>
+          <Link
             href="/notices"
             className="hover:text-black dark:hover:text-zinc-50"
           >
@@ -33,13 +46,16 @@ export async function SiteHeader() {
           >
             글쓰기
           </Link>
-
           {session?.user ? (
             <div className="flex items-center gap-3">
               <span className="text-zinc-500 dark:text-zinc-400">
                 {session.user.name}님
+                {session.user.role === "admin" && (
+                  <span className="ml-1.5 rounded bg-black/[.06] px-1.5 py-0.5 text-xs font-medium text-zinc-600 dark:bg-white/[.08] dark:text-zinc-300">
+                    관리자
+                  </span>
+                )}
               </span>
-              <span>{session.user.email}</span>
               <form action={logoutAction}>
                 <button
                   type="submit"
