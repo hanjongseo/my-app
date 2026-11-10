@@ -78,3 +78,6 @@ export async function removeFromCart(productId: string) {
   const lines = await readCart()
   await writeCart(lines.filter((line) => line.productId !== productId))
 }
+export async function clearCart() {
+  await writeCart([])
+}
