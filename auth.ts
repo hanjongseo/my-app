@@ -12,7 +12,18 @@ type UserDocLike = {
   passwordHash: string
   role?: "user" | "admin"
 }
+function assertAuthSecret(): string {
+  const secret = process.env.AUTH_SECRET
+  if (!secret) {
+    throw new Error(
+      "AUTH_SECRET 환경변수가 없습니다. `.env.local.example`을 참고해 `.env.local`을 만들고, " +
+        "`npx auth secret`으로 값을 채워주세요. (12주차처럼 코드에 기본값을 하드코딩하지 않습니다.)",
+    )
+  }
+  return secret
+}
 
+const authSecret = assertAuthSecret()
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   providers: [
@@ -51,6 +62,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: {
     strategy: "jwt",
   },
+  secret: authSecret,
   callbacks: {
     ...authConfig.callbacks,
     async jwt({ token, user }) {
