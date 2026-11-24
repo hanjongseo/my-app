@@ -15,6 +15,7 @@ import { createOrder } from "@/lib/orders"
 import { createNotice, deleteNotice, getNotice } from "@/lib/notices"
 import { createUser } from "@/lib/users"
 import { signIn, signOut, auth } from "@/auth"
+import { checkLoginRateLimit } from "./rateLimit"
 
 export async function addToCartAction(formData: FormData) {
   const productId = String(formData.get("productId") ?? "")
@@ -202,6 +203,15 @@ export async function registerAction(formData: FormData) {
 // (Next.js의 리다이렉트 신호 포함)는 그대로 다시 던져야 합니다 — 여기서
 // 삼켜버리면 로그인 성공 후 리다이렉트까지 막혀버립니다.
 export async function loginAction(formData: FormData) {
+  const email =
+    typeof formData.get("email") === "string"
+      ? String(formData.get("email"))
+      : ""
+  const { allowed, retryAfterSeconds } = checkLoginRateLimit(email)
+  if (!allowed) {
+    redirect(`/login?error=ratelimited&retry=${retryAfterSeconds}`)
+  }
+
   try {
     await signIn("credentials", formData)
   } catch (error) {

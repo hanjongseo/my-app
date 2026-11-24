@@ -2,10 +2,10 @@ import Link from "next/link"
 import { loginAction } from "@/lib/actions"
 import { SubmitButton } from "@/components/SubmitButton"
 
-type Props = { searchParams: Promise<{ error?: string }> }
+type Props = { searchParams: Promise<{ error?: string; retry?: string }> }
 
 export default async function LoginPage({ searchParams }: Props) {
-  const { error } = await searchParams
+  const { error, retry } = await searchParams
 
   return (
     <div className="mx-auto flex max-w-sm flex-1 flex-col gap-6 px-8 py-16">
@@ -13,7 +13,15 @@ export default async function LoginPage({ searchParams }: Props) {
         로그인
       </h1>
 
-      {error && (
+      {error === "ratelimited" && (
+        <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-700 dark:bg-amber-950 dark:text-amber-400">
+          로그인 시도가 너무 많습니다.{" "}
+          {retry
+            ? `${retry}초 후 다시 시도해주세요.`
+            : "잠시 후 다시 시도해주세요."}
+        </p>
+      )}
+      {error === "1" && (
         <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-950 dark:text-red-400">
           이메일 또는 비밀번호가 올바르지 않습니다.
         </p>
